@@ -175,8 +175,8 @@ rm -f "$SOCK"
 - macOS 26 (Tahoe) blocks enabling Screen Sharing/VNC headlessly (TCC gate) —
   don't waste time on VNC; CDP needs no GUI.
 - If you DO need your logged-in sessions (e.g. fetching a page behind a login),
-  use the cookie-extraction recipe in the `macos-remote-admin` skill
-  (`references/extract-chrome-cookies.md`) — but that needs the Keychain unlocked
+  use the cookie-extraction recipe ("extract chrome cookies") in the
+  `macos-remote-admin` skill — but that needs the Keychain unlocked
   in a GUI session first.
 
 ## Where this plugs into the pipeline
