@@ -27,16 +27,18 @@ For those, escalate to a **real Chrome** running on your remote Mac
 
 ## Prerequisites (all verified live 2026-08-02)
 
-- SSH key auth to the Mac:
-  `ssh -i ~/.ssh/id_ed25519 "$REMOTE_USER@$REMOTE_HOST"` (key present).
+- SSH key auth to the Mac, ideally via an SSH config entry named
+  `hrmac` that maps to `$REMOTE_HOST` as user `$REMOTE_USER` with your key
+  as `IdentityFile`. All snippets below use `ssh hrmac …`; substitute
+  `ssh -i <key> "$REMOTE_USER@$REMOTE_HOST"` if you prefer no alias.
 - Chrome is installed on the Mac at
   `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`.
 - Node + `chrome-remote-interface` on THIS box:
-  `npm install chrome-remote-interface` in a scratch dir.
-- **No sudo needed** for public-source fetching: we launch Chrome on a
-  NON-default profile in headless mode, which binds the debug port fine. (The
-  `sudo launchctl asuser` dance in the macos-remote-admin skill is ONLY to reach
-  the GUI Keychain for saved-password autofill — which we do NOT need here.)
+  `npm install chrome-remote-interface@0.3.1` in a scratch dir (or `npm i` from a `package.json` that pins it).
+- **No elevated privileges needed** for public-source fetching: we launch
+  Chrome on a NON-default profile in headless mode, which binds the debug port
+  fine. (The `launchctl asuser` dance in the macos-remote-admin skill is ONLY
+  to reach the GUI Keychain for saved-password autofill — not needed here.)
 
 ## Step 1 — launch a controllable Chrome on the Mac (non-default profile)
 
@@ -47,7 +49,7 @@ directory" error.
 ```bash
 # Launch headless Chrome on a fresh profile (avoids the live-Chrome single-instance
 # lock and the Chrome-136+ "remote debug needs a non-default data dir" error).
-ssh -i ~/.ssh/id_ed25519 "$REMOTE_USER@$REMOTE_HOST" bash -c "'
+ssh hrmac bash -c "'
 export PATH=/opt/homebrew/bin:/Applications/Google\ Chrome.app/Contents/MacOS:\$PATH
 mkdir -p \$HOME/hyperresearch-browser
 nohup \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" \
@@ -57,7 +59,7 @@ nohup \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" \
 '"
 # Optionally record the pid locally for a precise later kill (capture it FROM the
 # mac, since the mac's $HOME != this box's $HOME):
-ssh -i ~/.ssh/id_ed25519 "$REMOTE_USER@$REMOTE_HOST" \
+ssh hrmac \
   'pgrep -f "remote-debugging-port=9223" | head -1' > /tmp/hrchrome.pid
 cat /tmp/hrchrome.pid
 ```
@@ -65,8 +67,8 @@ cat /tmp/hrchrome.pid
 Wait ~3s, then verify the port bound:
 
 ```bash
-ssh -i ~/.ssh/id_ed25519 "$REMOTE_USER@$REMOTE_HOST" \
-  'curl -s http://127.0.0.1:9223/json/version'   # -> Browser string
+ssh hrmac \
+  'curl -s http://localhost:9223/json/version'   # -> Browser string
 ```
 
 If `curl` is refused, re-launch. (Note: your live daily-driver Chrome runs with
@@ -98,12 +100,11 @@ rm -f "$SOCK"
 sleep 1
 # 3. open the tunnel
 ssh -N -f -M -S "$SOCK" -o BatchMode=yes \
-  -i ~/.ssh/id_ed25519 \
-  -L 9223:127.0.0.1:9223 "$REMOTE_USER@$REMOTE_HOST"
+  -L 9223:localhost:9223 "$REMOTE_USER@$REMOTE_HOST"
 # -f forks to background; maps localhost:9223 -> mac:9223
 ```
 
-Verify from this box: `curl -s http://127.0.0.1:9223/json/version`.
+Verify from this box: `curl -s http://localhost:9223/json/version`.
 
 ## Step 3 — drive it (example: fetch rendered HTML)
 
@@ -151,10 +152,10 @@ match and kill its own shell).
 # 1. kill the controllable Chrome on the Mac (prefer the captured pid)
 PID=$(cat /tmp/hrchrome.pid 2>/dev/null)
 if [ -n "$PID" ]; then
-  ssh -i ~/.ssh/id_ed25519 "$REMOTE_USER@$REMOTE_HOST" "kill $PID 2>/dev/null"
+  ssh hrmac "kill $PID 2>/dev/null"
 fi
 # fallback: ensure ANY 9223 chrome on the mac is gone
-ssh -i ~/.ssh/id_ed25519 "$REMOTE_USER@$REMOTE_HOST" \
+ssh hrmac \
   'for p in $(pgrep -f "remote-debugging-port=9223"); do kill $p 2>/dev/null; done'
 rm -f /tmp/hrchrome.pid
 # 2. close the tunnel via control socket
@@ -166,9 +167,9 @@ rm -f "$SOCK"
 
 - **Do NOT** try to drive your live Chrome on 9222 — the port doesn't bind
   under Chrome 136+ on the default profile.
-- **Saved-password autofill requires the GUI Keychain** (`sudo launchctl
-  asuser`). We don't need it for public sources; a plain headless launch is
-  enough and avoids the sudo/PTY dance.
+- **Saved-password autofill requires the GUI Keychain** (reaching it needs
+  the `launchctl asuser` dance). We don't need it for public sources; a plain
+  headless launch is enough and avoids that + the PTY dance.
 - `errSecInteractionNotAllowed` in `/tmp/hrchrome.log` is harmless here — it is
   only the Keychain lookup for saved passwords, which we don't use.
 - macOS 26 (Tahoe) blocks enabling Screen Sharing/VNC headlessly (TCC gate) —

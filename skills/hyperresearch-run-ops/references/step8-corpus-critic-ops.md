@@ -81,7 +81,7 @@ No overturning source found = the position gains confidence — say so explicitl
 
 ## PDF extraction path + the scanned-PDF drop decision
 
-- Default `python3` here has NO fitz → use `uv run --with pymupdf python -c "..."`.
+- Default `python3` here has NO fitz → run Python via `uv` with pymupdf injected (a one-shot ephemeral environment, e.g. `uv run --with pymupdf`, or install pymupdf into any venv).
   curl the PDF first, then pymupdf to text, then grep.
 - Scanned/image-only PDFs yield `total_text_chars = 0` / `PAGE0_CHARS = 0`.
   Before OCR, decide if the single figure is worth it: OCR-ing a 30-page scan

@@ -76,7 +76,7 @@ Finding classes to expect and their fixes:
 - Write BOTH `readability-recommendations.json` (your assessment incl. not_recommended list) and
   `readability-decisions.json` (applied/skipped) — the run trace expects both artifacts.
 
-## Curation after the run (CLAUDE.md requirement)
+## Curation after the run (required by the project context file)
 
 - Loop `hpr note list -j`, filter notes by vault_tag, `hpr note update <id> --status evergreen`
   for every run note still in review; add `--summary` to newly created notes; then

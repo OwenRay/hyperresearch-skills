@@ -168,7 +168,7 @@ A, then B, then C), fetchers, critics (step 12).
 - **Leaf subagents write outputs to EXPLICIT files** (loci-a.json,
   temp/interim-*.md, temp/draft-*.md) rather than relying on the summary text.
   Pass the output path in the task goal; poll for existence with
-  `for i in $(seq 1 N); do [ -f <file> ] && break; sleep 10; done` (N ~ 30-60).
+  a bounded wait loop (`for i in 1..N`, sleep 10 between checks, break when the artifact file exists; N ~ 30-60).
 - **Live transcripts** stream to
   `$HOME/cache/delegation/live/<delegation_id>/task-0.log` — tail this early
   to verify a subagent started correctly (right cwd, hpr PATH export) instead of
