@@ -37,11 +37,12 @@ this bootstrap before anything else. It is idempotent — skip items that pass.
    export PATH="$HOME/.local/bin:$PATH"
    hyperresearch --version   # or: hpr --version
    ```
-   If missing, install the CLI (it is a normal PyPI package):
+   If missing, install the CLI (it is a normal PyPI package; pin to the version
+   your pipeline was validated against, e.g. `hyperresearch==0.10.0`):
    ```bash
    uv tool install hyperresearch      # preferred
-   # fallbacks: pipx install hyperresearch
-   #             python3 -m pip install --user hyperresearch
+   # fallbacks: pipx install "hyperresearch==0.10.0"
+   #             python3 -m pip install --user "hyperresearch==0.10.0"
    ```
    Verify: `hyperresearch --version` prints a version ≥ 0.10.0.
 
@@ -78,7 +79,7 @@ been translated to Hermes primitives:
 | `Skill(skill: "hyperresearch-N-stepname")` | `skill_view(name="hyperresearch-N-stepname")` — load the step's SKILL.md, then execute its procedure |
 | `subagent_type:` / `Task(...)` spawns | `delegate_task(goal=..., context=...)` — spawn a subagent. Pass the full rendered prompt as the goal/context. |
 | `$HPR` / `hyperresearch` CLI | Native. The `hyperresearch` PyPI package is installed; `hpr` / `hyperresearch` is on PATH at `~/.local/bin` (prepend to PATH if needed: `export PATH="~/.local/bin:$PATH"`). Every referenced subcommand exists (`run`, `note`, `search`, `fetch`, `citecheck`, `levers`, `vault-tag`, `profile`). |
-| **Real browser (fetch escalation)** | `hpr fetch` / `web_extract` / `curl` run from the local Linux host and fail on JS SPAs, bot-walls, and 403s. For those, escalate to the **remote Mac's real Chrome** via the `hyperresearch-browser-fetch` skill: it launches headless Chrome on `$REMOTE_HOST` (user `$REMOTE_USER`, SSH key configured) and drives it over CDP through an SSH tunnel. The Mac is reachable now and a headless Chrome binds port 9223 cleanly (verified 2026-08-02). |
+| **Real browser (fetch escalation)** | `hpr fetch` / `web_extract` / `curl` running on the local Linux machine fail on JS SPAs, bot-walls, and 403s. For those, escalate to the **remote Mac's real Chrome** via the `hyperresearch-browser-fetch` skill: it launches headless Chrome on `$REMOTE_HOST` (user `$REMOTE_USER`, SSH key configured) and drives it over CDP through an SSH tunnel. Verify reachability before relying on it — a debuggable headless Chrome should bind port 9223 cleanly. |
 
 Step files contain the literal `<< hpr >>` token in command snippets — substitute the real binary (`hpr` or `hyperresearch`) there. If `hpr` is not on PATH, use the full path `~/.local/bin/hpr`.
 
